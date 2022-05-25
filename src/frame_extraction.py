@@ -1,32 +1,83 @@
+# import argparse
+import os
+import sys
+from pathlib import Path
+
 import cv2
-from torch import le
+
+import time
+
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1]  # VMT project root directory
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+
+
+def list_directory(root, subdirs=[]):
+    # Get subdirectories
+    for path in Path(root).iterdir():
+        if path.is_dir():
+            subdirs.append(f'{path}')
+            list_directory(path, subdirs)
+    return subdirs[1:]
+ 
+def list_file(root):
+    # Subdirectories
+    dir_list = list_directory(root)
+
+    # Get all file's addresses
+    files = []
+    for dir in dir_list:
+        file_path = os.listdir(dir)
+
+        # Remove ./data/raw from the addresses
+        dir = os.path.relpath(dir, root)
+
+        for file in file_path:
+            files.append(f'{dir}/{file}')
+            
+    return files
+
 
 def extract_frame(video_path):
-    video = cv2.VideoCapture(video_path)
+    video = cv2.VideoCapture(f'{ROOT}/data/raw/{video_path}')
 
-    success = True
-    count =1
+    # Used as counter variable
+    count = 0
+    # checks whether frames were extracted
+    success = 1
+
+    # Created directory if it does not exist
+    path = os.path.join(f'{ROOT}/data/frames/{video_path}')
+    if not os.path.exists(path):
+        os.makedirs(path)  
 
     while success:
-        success, frame = video.read()
-        output = '../data/Extracted Frames/A1A SB North of Edgewater Lakes Blvd/Cam 736 - Facing North/vi_0005_20220309_134449.mp4/' + str(count) + '.jpg'
-        if success == True:
-            cv2.imwrite(output, frame)
-            # print('Frame {} Extracted Successfully'.format(count))
-            count = count + 1
-        else:
-            break
+  
+        # video object calls read
+        # function extract frames
+        success, image = video.read()
+  
+        # Saves the frames with frame-count
+        # print(f'{path}/{count}.jpg')
+        cv2.imwrite(f'{path}/{count}.jpg', image)
+        print(f'{video_path}: Extract frame {count}.')
+  
+        count += 1
+        time.sleep(1)
 
 
-path = "../data/153940 - Daytona Collections/A1A SB North of Edgewater Lakes Blvd/Cam 736 - Facing North/vi_0005_20220309_134449.mp4"
-path_list = ["../data/153940 - Daytona Collections/US Hwy 1 NB South of Bunnell Gas Mart/Cam 753 - facing North",
-             "../data/153940 - Daytona Collections/US Hwy 1 NB South of Bunnell Gas Mart/Cam 737 - facing South",
-             "../data/153940 - Daytona Collections/A1A SB North of Edgewater Lakes Blvd/Cam 736 - Facing North",
-             "../data/153940 - Daytona Collections/A1A SB North of Edgewater Lakes Blvd/Cam 745 - Facing North",
-             "../data/153940 - Daytona Collections/Video Only Locations/S Williamson @ Bellvue",
-             "../data/153940 - Daytona Collections/Video Only Locations/Tomoka @ Bellvue",
-             "../data/153940 - Daytona Collections/Hwy 92 EB West of Lanscam Ln/Cam 734 - don't use",
-             "../data/153940 - Daytona Collections/Hwy 92 EB West of Lanscam Ln/Cam 505 - facing Northeast"]
-extract_frame(path)
-# tmp = "../data/153940 - Daytona Collections"
-# print(tmp[36])
+
+def main():
+    # path = f'157820 - Leesburg PTMS & TTMS/CR 44 (117024)/15782017.mp4'
+    # extract_frame(path)
+    list = list_file(f'{ROOT}/data/raw/')
+    for x in list:
+        # print("x::::::::::::", x)
+        extract_frame(x)
+        
+
+if __name__ == "__main__":
+    main()
