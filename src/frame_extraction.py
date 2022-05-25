@@ -1,11 +1,12 @@
 # import argparse
+from math import ceil
 import os
 import sys
 from pathlib import Path
 
 import cv2
 
-import time
+from math import floor
 
 
 FILE = Path(__file__).resolve()
@@ -41,32 +42,38 @@ def list_file(root):
     return files
 
 
-def extract_frame(video_path):
-    video = cv2.VideoCapture(f'{ROOT}/data/raw/{video_path}')
+def extract_frame(input_path):
+    video = cv2.VideoCapture(f'{ROOT}/data/raw/{input_path}')
 
     # Used as counter variable
     count = 0
     # checks whether frames were extracted
     success = 1
 
+    batch_size = 10000
+    
     # Created directory if it does not exist
-    path = os.path.join(f'{ROOT}/data/frames/{video_path}')
-    if not os.path.exists(path):
-        os.makedirs(path)  
+    input_path = os.path.join(f'{ROOT}/data/frames/{input_path}')
+    if not os.path.exists(input_path):
+        os.makedirs(input_path)  
 
     while success:
-  
-        # video object calls read
-        # function extract frames
-        success, image = video.read()
-  
         # Saves the frames with frame-count
-        # print(f'{path}/{count}.jpg')
-        cv2.imwrite(f'{path}/{count}.jpg', image)
-        print(f'{video_path}: Extract frame {count}.')
+        for i in range(batch_size):
+            video.set(cv2.CAP_PROP_POS_MSEC,(count*1000))
+            success, image = video.read()
+
+            batch_number = floor(count/batch_size)
+
+            output_path = f'{input_path}/batch {batch_number}'
+
+            if not os.path.exists(f'{output_path}'):
+                os.mkdir(f'{output_path}')
+
+            cv2.imwrite(f'{output_path}/{count}.jpg', image)
+            print(f'Extract frame ({count})  {output_path}')
   
-        count += 1
-        time.sleep(1)
+            count += 1
 
 
 
