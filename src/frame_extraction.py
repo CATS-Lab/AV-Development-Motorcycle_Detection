@@ -25,7 +25,7 @@ def list_directory(root, subdirs=[]):
     return subdirs[1:]
  
 def list_file(root):
-    # Subdirectories
+    # List of all subdirectories in {ROOT}/data/raw
     dir_list = list_directory(root)
 
     # Get all file's addresses
@@ -43,6 +43,7 @@ def list_file(root):
 
 
 def extract_frame(input_path):
+    # Read input video
     video = cv2.VideoCapture(f'{ROOT}/data/raw/{input_path}')
 
     # Used as counter variable
@@ -50,19 +51,21 @@ def extract_frame(input_path):
     # checks whether frames were extracted
     success = 1
 
-    batch_size = 10000
+    batch_size = 10001
     
-    # Created directory if it does not exist
+    # Created output directory if it does not exist
     input_path = os.path.join(f'{ROOT}/data/frames/{input_path}')
     if not os.path.exists(input_path):
         os.makedirs(input_path)  
 
     while success:
-        # Saves the frames with frame-count
-        for i in range(batch_size):
+        # Save each {bach_size} frames in a seprate folder
+        for i in range(1, batch_size):
+            # Extract frame each 1 second
             video.set(cv2.CAP_PROP_POS_MSEC,(count*1000))
             success, image = video.read()
 
+            # Create a new folder for next {bach_size} frames, if it does not exist
             batch_number = floor(count/batch_size)
 
             output_path = f'{input_path}/batch {batch_number}'
@@ -70,8 +73,9 @@ def extract_frame(input_path):
             if not os.path.exists(f'{output_path}'):
                 os.mkdir(f'{output_path}')
 
+            # Saves the frames with frame-count
             cv2.imwrite(f'{output_path}/{count}.jpg', image)
-            print(f'Extract frame ({count})  {output_path}')
+            print(f'Extract frame ({count})    {output_path}')
   
             count += 1
 
