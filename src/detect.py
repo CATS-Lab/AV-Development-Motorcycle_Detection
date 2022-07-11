@@ -28,6 +28,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from time import sleep
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -60,7 +61,7 @@ def run(
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         save_crop=True,  # save cropped prediction boxes
-        save_frm=True,  # save detected objects frame
+        save_frm=False,  # save detected objects frame
         nosave=False,  # do not save images/videos
         classes=None,  # filter by class: --class 0, or --class 0 2 3
         agnostic_nms=False,  # class-agnostic NMS
@@ -219,7 +220,7 @@ def run(
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'weights/yolov5s.pt', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
@@ -231,6 +232,8 @@ def parse_opt():
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--save-crop', action='store_true', help='save cropped prediction boxes')
+    # To-Do: add --save-frame
+    # parser.add_argument('--save-frame', action='store_true', help='save frames included detected objects')
     parser.add_argument('--nosave', action='store_true', help='do not save images/videos')
     parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
@@ -253,7 +256,15 @@ def parse_opt():
 
 def main(opt):
     check_requirements(exclude=('tensorboard', 'thop'))
+    t0 = time_sync()
     run(**vars(opt))
+    t1 = time_sync()
+    
+    # Print time
+    h = (t1-t0)/3600
+    m = ((t1-t0)%3600)/60
+    s = (((t1-t0)%3600)%60)
+    LOGGER.info(f'Execution time: {h:.0f}:{m:.0f}:{s:.0f}')
 
 
 if __name__ == "__main__":
