@@ -1,4 +1,4 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# YOLOv5  by Ultralytics, GPL-3.0 license
 """
 Run inference on images, videos, directories, streams, etc.
 
@@ -61,7 +61,7 @@ def run(
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         save_crop=True,  # save cropped prediction boxes
-        save_frm=False,  # save detected objects frame
+        save_frm=True,  # save detected objects frame
         nosave=False,  # do not save images/videos
         classes=None,  # filter by class: --class 0, or --class 0 2 3
         agnostic_nms=False,  # class-agnostic NMS
@@ -120,6 +120,7 @@ def run(
         t2 = time_sync()
         dt[0] += t2 - t1
 
+
         # Inference
         visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
         pred = model(im, augment=augment, visualize=visualize)
@@ -150,6 +151,7 @@ def run(
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
@@ -159,26 +161,34 @@ def run(
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
-                
+                # Save frames
+                if save_frm:
+                    save_frame(im0, file=save_dir / 'frames' / names[int(c)] / f'{p.stem}.jpg')
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+                    # # Save frames
+                    # if save_frm:
+                    #     save_frame(im0, file=save_dir / 'frames' / names[c] / f'{p.stem}.jpg')
+
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
+                    
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                         annotator.box_label(xyxy, label, color=colors(c, True))
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+                    
+                    # # Save frames
+                    # if save_frm:
+                    #     save_frame(im0, file=save_dir / 'frames' / names[c] / f'{p.stem}.jpg')
 
-                    # Save frames
-                    if save_frm:
-                        save_frame(im0, file=save_dir / 'frames' / names[c] / f'{p.stem}.jpg')
+                    
 
             # Stream results
             im0 = annotator.result()
@@ -261,10 +271,15 @@ def main(opt):
     t1 = time_sync()
     
     # Print time
+    # t0, t1 = 0, 1000
     h = (t1-t0)/3600
     m = ((t1-t0)%3600)/60
     s = (((t1-t0)%3600)%60)
     LOGGER.info(f'Execution time: {h:.0f}:{m:.0f}:{s:.0f}')
+
+    log = open("../log.txt", "a")
+    log.write(f'Execution time: {h:.0f}:{m:.0f}:{s:.0f}\n')
+    log.close()
 
 
 if __name__ == "__main__":
