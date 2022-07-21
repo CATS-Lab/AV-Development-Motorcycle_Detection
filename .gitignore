@@ -1,8 +1,10 @@
 data/
 results/
 runs/
+documents/
 *.pt
 note.txt
+*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
